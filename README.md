@@ -4,8 +4,7 @@ A Tampermonkey/Greasemonkey userscript that simulates realistic human typing, co
 
 ## Installation
 
-1. [Install here](https://update.greasyfork.org/scripts/566022/Human%20Typer%20-%20Realistic%20Typing%20Simulator.user.js
-)
+1. [Install here](https://update.greasyfork.org/scripts/566022/Human%20Typer%20-%20Realistic%20Typing%20Simulator.user.js)
 4. The panel appears on every page (toggle with **Ctrl+Shift+H**)
 
 ## Usage
@@ -37,11 +36,40 @@ A Tampermonkey/Greasemonkey userscript that simulates realistic human typing, co
 - **Per-character modifiers**: common letters (e, t, a, o, i, n, s, h, r) type faster; uncommon letters (z, x, q, j, k, v) type slower; capitals and symbols are slowest
 - **Bigram-aware**: hand-alternating pairs (e.g. "th", "en") are fastest, same-hand different-finger pairs are medium, same-finger repeats (e.g. "ed", "de") are slowest
 
+### Key Dwell Time
+
+Real keyboards register how long each key is held down (keydown → keyup). Synthetic events without dwell time are a detection vector.
+
+| Key Type | Hold Duration |
+|----------|--------------|
+| Normal letter keys | 65-115ms |
+| Pinky-operated keys (q, a, z, p, ;, etc.) | 85-135ms |
+| Spacebar (thumb) | 55-95ms |
+| Per-keystroke jitter | ±12ms |
+
+- Dwell scales with WPM (faster typists hold keys more briefly)
+- Keyup fires asynchronously after the dwell period (non-blocking)
+- Shift key dispatched with correct hand side (left shift for right-hand keys, vice versa) and proper `location` field
+
+### Realistic Keyboard Events
+
+Every keystroke dispatches events with accurate metadata:
+
+- **Physical key codes** (`KeyA`, `Digit1`, `Semicolon`, `BracketLeft`, etc.) matching real hardware
+- **Legacy keyCode/which** values for older event APIs
+- **Shift modifier** with correct `shiftKey` flag and separate shift keydown/keyup events
+- **Shift hand selection**: touch typists use opposite-hand shift (left shift for right-hand letters)
+- **charCode** on keypress events
+
 ### Burst Typing
 
 Real typing follows a chunk-and-pause rhythm, not a constant stream:
 
-- **3-14 character bursts** with tight variance within each burst (SD ~15ms)
+- **Word-aware burst sizing**: burst length adapts to word structure instead of fixed random ranges
+  - Short remaining-in-word extends into space + next word
+  - Medium words (≤7 chars) often typed in one burst
+  - Long words broken into 4-8 char chunks
+  - Common words get longer bursts (muscle memory)
 - **180-600ms pauses** between bursts
 - Errors and corrections reset the burst flow
 
@@ -58,6 +86,20 @@ Four error types weighted by real-world frequency:
 
 - **QWERTY adjacency map** ensures substitutions hit physically neighboring keys
 - **~6% base error rate** (matches trained typist data)
+- **Context-dependent error rate**:
+  - Longer words have higher error rates (+0.8% per char beyond length 4)
+  - Common words (top ~120 English words) have 50% fewer errors (muscle memory)
+  - Middle-of-word characters are more error-prone (bell curve peaking at center)
+  - Post-error frustration: 30% error rate boost that decays over 5 characters
+
+### Habitual Typo Personality
+
+Each typing session generates a unique "typist personality":
+
+- **3-6 habitual letter swaps** randomly chosen from adjacent key pairs
+- These pairs trigger at **15% rate** when encountered (vs 6% base)
+- Creates consistent, repeatable error patterns per session — not purely random
+- Mimics how real people have specific letters they always mix up
 
 ### Error Correction
 
@@ -98,13 +140,28 @@ Pauses follow the hierarchy observed in writing research:
 | Paragraph break | 1.2-3.0s |
 | Thinking pause (3% chance per word) | 2.0-5.5s |
 
-### Fatigue Simulation
+### Fatigue Simulation (Nonlinear)
 
-Over extended typing sessions:
+Real fatigue is messy — not a straight line. The fatigue model combines multiple overlapping signals:
 
-- Typing speed degrades by **+0.2% per minute** (caps at +20%)
-- Error rate slowly increases over time
-- Matches research showing IKI increases and accuracy decreases during prolonged work
+- **Overall upward trend**: +0.2% per minute (caps at +20%)
+- **Attention wave**: sinusoidal 3-5 minute cycle (±3% speed variation)
+- **Micro-oscillations**: two overlapping faster frequencies simulating irregular focus fluctuations
+- **Second wind dips**: occasional brief recovery moments
+- **Error rate oscillates** in sync with attention waves
+- Floor at 92% ensures the model never makes you faster than rested speed
+
+### Entropy Layers
+
+Adds chaotic human noise that pure mathematical distributions can't replicate:
+
+| Layer | Effect |
+|-------|--------|
+| **Micro-tremor jitter** | ±8ms random per keystroke (hand/finger instability) |
+| **Attention drift** | ±4% speed variation over 20-45 second cycles |
+| **Zone states** | 0.2% chance per char of entering "the zone" (15% faster) or "brain fog" (20% slower) for 8-25 characters |
+
+Each session randomizes the phase and period of all oscillations, so no two runs produce the same timing signature.
 
 ### Compatibility
 
@@ -112,6 +169,7 @@ Over extended typing sessions:
 - Standard text inputs and textareas
 - ContentEditable elements (rich text editors)
 - Panel z-index set to maximum (`2147483647`) to stay above all UI
+
 
 ## Research Sources
 
@@ -152,4 +210,3 @@ The typing parameters in this script are based on the following peer-reviewed st
 ## License
 
 All Rights Reserved. This software may not be modified, redistributed, or used in derivative works without explicit written permission from the author (3seventeen).
-
