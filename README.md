@@ -4,7 +4,8 @@ A Tampermonkey/Greasemonkey userscript that simulates realistic human typing, co
 
 ## Installation
 
-1. [Install here](TBA)
+1. [Install here](https://update.greasyfork.org/scripts/566022/Human%20Typer%20-%20Realistic%20Typing%20Simulator.user.js
+)
 4. The panel appears on every page (toggle with **Ctrl+Shift+H**)
 
 ## Usage
@@ -164,4 +165,5 @@ The typing parameters in this script are based on the following peer-reviewed st
 
 ## License
 
-MIT
+All Rights Reserved. This software may not be modified, redistributed, or used in derivative works without explicit written permission from the author (3seventeen).
+
