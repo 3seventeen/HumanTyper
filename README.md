@@ -113,20 +113,6 @@ Over extended typing sessions:
 - ContentEditable elements (rich text editors)
 - Panel z-index set to maximum (`2147483647`) to stay above all UI
 
-## Configuration
-
-All parameters are configurable in the `CONFIG` object at the top of the script:
-
-```javascript
-const CONFIG = {
-  wpmMin: 42,                    // Minimum WPM
-  wpmMax: 58,                    // Maximum WPM
-  errorRate: 0.06,               // Base error rate (6%)
-  thinkingPauseChance: 0.03,     // 3% chance per word boundary
-  // ... see source for full config
-};
-```
-
 ## Research Sources
 
 The typing parameters in this script are based on the following peer-reviewed studies:
